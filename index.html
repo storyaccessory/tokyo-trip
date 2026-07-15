@@ -233,11 +233,17 @@
     <div class="day-wrap">
       <template v-for="(it,idx) in visibleItems" :key="it.id">
         <!-- transit -->
-        <a class="transit" v-if="transitOf(idx)" :href="transitOf(idx).url" target="_blank" rel="noopener">
+        <a class="transit" v-if="segOf(idx)" :href="segOf(idx).url" target="_blank" rel="noopener">
           <span class="line"></span>
-          <svg v-if="transitOf(idx).mode==='walk'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="4" r="2"/><path d="M13 8l-2 4 3 2 1 6M11 12l-3 2-2 4M13 8l3 1"/></svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M4 11h16M8 16v2M16 16v2"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="13" r="1"/></svg>
-          約 <b>{{ transitOf(idx).min }}</b> 分 · {{ transitOf(idx).mode==='walk'?'步行':'大眾運輸' }}
+          <template v-if="segOf(idx).long">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="13" rx="2.5"/><path d="M6 10h12M9 20l-1.5 2M15 20l1.5 2M9 17v0M15 17v0"/></svg>
+            長途移動 · 電車/特急
+          </template>
+          <template v-else>
+            <svg v-if="segOf(idx).mode==='walk'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="4" r="2"/><path d="M13 8l-2 4 3 2 1 6M11 12l-3 2-2 4M13 8l3 1"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="11" rx="2"/><path d="M4 11h16M8 16v2M16 16v2"/><circle cx="8" cy="13" r="1"/><circle cx="16" cy="13" r="1"/></svg>
+            約 <b>{{ segOf(idx).min }}</b> 分 · {{ segOf(idx).mode==='walk'?'步行':'大眾運輸' }}
+          </template>
           <span class="line"></span>
         </a>
 
@@ -500,57 +506,73 @@ const seedDays = [
    items:[
      {id:uid(),cat:'航班',time:'06:00 桃園機場報到',name:'桃園機場報到',lat:25.0797,lng:121.2342,
        flight:{tag:'去程 OUTBOUND',from:'TPE',dep:'06:45',to:'NRT',arr:'11:15',dur:'約 4h30m',no:'酷航 Scoot ｜ 桃園 → 成田'}},
-     {id:uid(),cat:'美食',time:'13:15',name:'とんかつ 山家（上野）',hours:'11:00–22:30',note:'京成上野到即吃，炸豬排名店',lat:35.7089,lng:139.7746},
-     {id:uid(),cat:'住宿',time:'14:00–15:15',name:'回飯店寄行李・休息（ホテルモントレ半蔵門）',hours:'check-in 15:00',note:'上野→銀座線→三越前→半蔵門線→半藏門約25分；問早check-in，沒空房也可先寄行李、大廳歇腿',lat:35.6852,lng:139.7386},
-     {id:uid(),cat:'景點',time:'15:30',name:'上野東照宮',hours:'9:00–17:00',ticket:'境內免費',note:'拿昇龍守（16–18日限定）',lat:35.7166,lng:139.7745},
-     {id:uid(),cat:'景點',time:'16:30',name:'谷中銀座商店街',hours:'多店 17–18 點打烊',note:'谷根千散步：谷中銀座→根津神社→CIBI',lat:35.7269,lng:139.7660},
-     {id:uid(),cat:'景點',time:'17:15',name:'根津神社',hours:'9:00–17:30',ticket:'免費',note:'千本鳥居',lat:35.7202,lng:139.7607},
-     {id:uid(),cat:'美食',time:'22:00',name:'焼肉 鶯谷園',booked:true,note:'已訂位固定時段，傍晚務必先墊胃',lat:35.7205,lng:139.7799},
+     {id:uid(),cat:'其他',time:'12:19–13:43',name:'出關 → Skyliner 進市區',mapQ:'京成上野駅',hours:'成田空港 → 京成上野 約44分',note:'落地11:15＋入境提行李約1hr。往京成上野 Skyliner 班次（擇一）：🚄 12:19→約13:03 ／ 12:38→約13:22 ／ 12:59→約13:43。※ 12:29 那班是 ACCESS特急往羽田、勿搭。建議先線上預訂指定席；並在京成上野先劃/換 7/21 回程 Skyliner 指定席',lat:35.7118,lng:139.7745},
+     {id:uid(),cat:'美食',time:'13:15–14:00',name:'午餐 とんかつ 山家（上野）',mapQ:'とんかつ 山家 上野',mins:2,wmode:'walk',hours:'11:00–22:30',note:'京成上野到即吃，炸豬排名店',lat:35.7089,lng:139.7746},
+     {id:uid(),cat:'住宿',time:'14:00–15:15',name:'回飯店寄行李・休息（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:25,hours:'check-in 15:00',note:'上野→銀座線→三越前→半蔵門線→半藏門約25分；問早check-in，沒空房也可先寄行李、大廳歇腿。🎫 這趟 Metro 首刷啟用「72小時地鐵券 ¥2,000」→ 涵蓋 Day1下午＋Day2＋Day3＋Day4午前（72h）',lat:35.6852,lng:139.7386},
+     {id:uid(),cat:'景點',time:'15:30–16:30',name:'上野東照宮',mins:18,hours:'授与所 夏季約到17:00',ticket:'境內免費',note:'半藏門→上野約18分；拿昇龍守（16–18日限定），先拿再逛',lat:35.7166,lng:139.7745},
+     {id:uid(),cat:'景點',time:'16:30–18:00',name:'谷中銀座商店街',mins:8,hours:'多店 17–18 點打烊',note:'谷根千步行圈：谷中銀座 → 根津神社 → tokyo CIBI',lat:35.7269,lng:139.7660},
+     {id:uid(),cat:'景點',time:'17:15',name:'根津神社',mins:8,wmode:'walk',hours:'9:00–17:30',ticket:'免費',note:'千本鳥居；旁邊 tokyo CIBI',lat:35.7202,lng:139.7607},
+     {id:uid(),cat:'購物',time:'18:00–21:00',name:'上野採購・墊胃（藥妝＋唐吉訶德）',mapQ:'アメ横 上野',mins:12,hours:'唐吉訶德 –深夜',note:'※ 傍晚先吃一頓，別空腹撐到22點',lat:35.7095,lng:139.7745},
+     {id:uid(),cat:'美食',time:'22:00',name:'焼肉 鶯谷園',mapQ:'焼肉 鶯谷園',mins:6,booked:true,note:'已訂位固定時段；吃完約23:00',lat:35.7205,lng:139.7799},
+     {id:uid(),cat:'住宿',time:'約23:00',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:25,note:'鶯谷 → 半藏門約25分',lat:35.6852,lng:139.7386},
    ]},
  { date:'7/17', en:'Fri', full:'2026-07-17', region:'銀座・東京駅',
    weather:{emoji:'☀️',temp:33,low:26,feel:36,cond:'晴'},
    items:[
-     {id:uid(),cat:'景點',time:'09:00',name:'五十稲荷神社（神保町）',hours:'9:00–17:00',ticket:'免費',note:'A7/A9 出口',lat:35.6957,lng:139.7576},
-     {id:uid(),cat:'美食',time:'11:00',name:'五代目 花山うどん（日本橋）',hours:'11:00 開',note:'烏冬；或隔壁鰻魚飯',lat:35.6837,lng:139.7745},
-     {id:uid(),cat:'購物',time:'12:30',name:'東京駅 KITTE・一番街',hours:'11:00–21:00',note:'買甜點、KITTE 屋上看紅磚站舍',lat:35.6795,lng:139.7649},
-     {id:uid(),cat:'購物',time:'14:30',name:'銀座（Uniqlo 旗艦）',hours:'11:00–21:00',note:'GINZA SIX、無印、伊東屋、歌舞伎座',lat:35.6717,lng:139.7650},
-     {id:uid(),cat:'美食',time:'20:30',name:'焼肉 一心たん助 旦（有楽町）',booked:true,note:'已訂位固定時段',lat:35.6749,lng:139.7628},
+     {id:uid(),cat:'景點',time:'09:00',name:'五十稲荷神社（神保町）',mapQ:'五十稲荷神社 神保町',mins:6,hours:'9:00–17:00',ticket:'免費',note:'半藏門線→神保町 約6分（A7/A9 出口）',lat:35.6957,lng:139.7576},
+     {id:uid(),cat:'景點',time:'10:00',name:'人形町 野口勇專門店（OZEKI Tokyo Gallery）',mapQ:'OZEKI Tokyo Gallery, 1 Chome-2-6 Nihonbashiningyocho, Chuo City, Tokyo',mins:8,hours:'',note:'神保町→水天宮前 約8分（前面買到可略過）',lat:35.6858,lng:139.7827},
+     {id:uid(),cat:'美食',time:'11:00',name:'午餐 五代目 花山うどん（日本橋）',mapQ:'五代目 花山うどん 日本橋',mins:4,hours:'11:00 開',note:'水天宮前→日本橋 約4分；烏冬，或隔壁鰻魚飯',lat:35.6837,lng:139.7745},
+     {id:uid(),cat:'購物',time:'12:30–14:30',name:'東京駅 KITTE・一番街',mapQ:'KITTE 丸の内',mins:5,hours:'11:00–21:00',note:'日本橋→東京駅 約5分；一番街買甜點＋治一郎＋KITTE 屋上看紅磚站舍',lat:35.6795,lng:139.7649},
+     {id:uid(),cat:'購物',time:'14:30–20:00',name:'銀座 逛街（Uniqlo 旗艦）',mapQ:'銀座 ユニクロ',mins:5,hours:'11:00–21:00',note:'東京駅→銀座 約5分；GINZA SIX、無印、伊東屋、歌舞伎座、三越/松屋デパ地下',lat:35.6717,lng:139.7650},
+     {id:uid(),cat:'美食',time:'20:30',name:'焼肉 一心たん助 旦（有楽町）',mapQ:'焼肉 一心たん助 有楽町',mins:8,wmode:'walk',booked:true,note:'已訂位固定時段；銀座步行約8分',lat:35.6749,lng:139.7628},
+     {id:uid(),cat:'住宿',time:'約22:30',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:15,note:'有楽町 → 半藏門約15分',lat:35.6852,lng:139.7386},
    ]},
- { date:'7/18', en:'Sat', full:'2026-07-18', region:'表參道・新宿',
+ { date:'7/18', en:'Sat', full:'2026-07-18', region:'大井・表參道・新宿',
    weather:{emoji:'⛅',temp:31,low:25,feel:34,cond:'多雲'},
    items:[
-     {id:uid(),cat:'景點',time:'09:00',name:'大井競馬場 跳蚤市場',hours:'週末早上',note:'雨天可能縮短，逛約1.5小時',lat:35.5931,lng:139.7466},
-     {id:uid(),cat:'美食',time:'11:30',name:'川上庵 KAWAKAMI-AN（外苑前）',hours:'11:00–22:00',note:'蕎麥麵',lat:35.6706,lng:139.7175},
-     {id:uid(),cat:'購物',time:'12:30',name:'青山・原宿・表參道（GYRE/HumanMade）',hours:'11:00–20:00',note:'CIBONE、ACTUS、千層酥',lat:35.6684,lng:139.7076},
-     {id:uid(),cat:'美食',time:'17:30',name:'迴轉壽司 Ginza Onodera 本店（表參道）',hours:'11:00–22:00',note:'可能排隊，建議提早到',lat:35.6650,lng:139.7120},
-     {id:uid(),cat:'購物',time:'19:00',name:'新宿（唐吉訶德/體育用品）',hours:'–24:00',note:'副都心線約10分',lat:35.6896,lng:139.7006},
+     {id:uid(),cat:'景點',time:'09:00–10:30',name:'大井競馬場 跳蚤市場',mapQ:'大井競馬場',mins:40,hours:'週末早上開市',ticket:'免費',note:'08:20 半藏門出門，約40分；雨天可能縮短，逛約1.5小時',lat:35.5931,lng:139.7466},
+     {id:uid(),cat:'美食',time:'11:30–12:30',name:'午餐 川上庵 KAWAKAMI-AN（外苑前）',mapQ:'川上庵 外苑前',mins:45,hours:'11:00–22:00',note:'大井→青山一丁目→外苑前 約40–50分；蕎麥麵',lat:35.6706,lng:139.7175},
+     {id:uid(),cat:'購物',time:'12:30–17:00',name:'青山・原宿・表參道（GYRE/HumanMade）',mapQ:'GYRE 表参道',mins:5,hours:'11:00–20:00',note:'外苑前→表參道 約5分；CIBONE、ACTUS、原宿、千層酥',lat:35.6684,lng:139.7076},
+     {id:uid(),cat:'美食',time:'17:30–19:00',name:'晚餐 迴轉壽司 Ginza Onodera 本店（表參道）',mapQ:'回転寿司 銀座おのでら 表参道',mins:5,wmode:'walk',hours:'11:00–22:00',note:'可能排隊，建議提早到',lat:35.6650,lng:139.7120},
+     {id:uid(),cat:'購物',time:'19:00–21:00',name:'新宿（唐吉訶德/體育用品）',mapQ:'新宿駅',mins:10,hours:'–24:00',note:'表參道→新宿 副都心線約10分',lat:35.6896,lng:139.7006},
+     {id:uid(),cat:'住宿',time:'約21:00',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:15,note:'新宿→半藏門約15分（都営新宿線→九段下轉半蔵門線）',lat:35.6852,lng:139.7386},
    ]},
  { date:'7/19', en:'Sun', full:'2026-07-19', region:'代官山・渋谷',
    weather:{emoji:'☀️',temp:32,low:26,feel:35,cond:'晴'},
    items:[
-     {id:uid(),cat:'美食',time:'09:30',name:'NO4 早午餐（四番町）',hours:'9:00–17:00',note:'飯店步行約10分',lat:35.6903,lng:139.7402},
-     {id:uid(),cat:'購物',time:'11:00',name:'自由が丘（IDÉE / Todays Special）',hours:'11:00–20:00',note:'先衝最遠；家居雜貨、甜點天國',lat:35.6076,lng:139.6689},
-     {id:uid(),cat:'購物',time:'13:00',name:'代官山 蔦屋 T-SITE',hours:'10:00–22:00',note:'LOG ROAD、NUMBER SUGAR',lat:35.6485,lng:139.7030},
-     {id:uid(),cat:'購物',time:'14:30',name:'渋谷（スクランブル/MIYASHITA PARK）',hours:'–21:00',note:'購物',lat:35.6595,lng:139.7005},
-     {id:uid(),cat:'景點',time:'19:40',name:'東京タワー',hours:'9:00–22:30',ticket:'展望台 ¥1,200 起',note:'',lat:35.6586,lng:139.7454},
-     {id:uid(),cat:'其他',time:'20:00',name:'Sky Lounge Stellar Garden',hours:'17:00 開',note:'夜景酒吧；隔天伊豆早起別待太晚',lat:35.6577,lng:139.7480},
+     {id:uid(),cat:'美食',time:'09:30–10:45',name:'NO4 早午餐（四番町）',mapQ:'NO4 四番町',mins:10,wmode:'walk',hours:'9:00–17:00',note:'飯店步行約10分',lat:35.6903,lng:139.7402},
+     {id:uid(),cat:'購物',time:'11:00–13:00',name:'自由が丘（IDÉE / Todays Special）',mapQ:'自由が丘駅',mins:33,hours:'11:00–20:00',note:'先衝最遠 約30–35分；KOHORO、Trainchi、甜點天國',lat:35.6076,lng:139.6689},
+     {id:uid(),cat:'購物',time:'13:00–14:30',name:'代官山 蔦屋 T-SITE',mapQ:'代官山 蔦屋書店',mins:10,hours:'10:00–22:00',note:'自由が丘→代官山 約10分；LOG ROAD、NUMBER SUGAR',lat:35.6485,lng:139.7030},
+     {id:uid(),cat:'購物',time:'14:30–18:00',name:'渋谷（スクランブル/MIYASHITA PARK）',mapQ:'渋谷スクランブル交差点',mins:5,hours:'–21:00',note:'代官山→渋谷約5分；購物',lat:35.6595,lng:139.7005},
+     {id:uid(),cat:'美食',time:'18:00–19:30',name:'渋谷 晚餐/自由（デパ地下/Hatoya）',mapQ:'渋谷 デパ地下',mins:3,wmode:'walk',hours:'',note:'',lat:35.6595,lng:139.7005},
+     {id:uid(),cat:'景點',time:'19:40',name:'東京タワー',mapQ:'東京タワー',mins:20,hours:'9:00–22:30',ticket:'展望台 ¥1,200 起',note:'渋谷→東京鐵塔約20分',lat:35.6586,lng:139.7454},
+     {id:uid(),cat:'其他',time:'20:00',name:'Sky Lounge Stellar Garden',mapQ:'Sky Lounge Stellar Garden 東京',mins:5,wmode:'walk',hours:'17:00 開',note:'夜景酒吧；隔天伊豆早起別待太晚',lat:35.6577,lng:139.7480},
+     {id:uid(),cat:'住宿',time:'約22:00',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:20,note:'東京鐵塔 → 半藏門約20分',lat:35.6852,lng:139.7386},
    ]},
  { date:'7/20', en:'Mon', full:'2026-07-20', region:'伊豆・熱海',
    weather:{emoji:'☀️',temp:30,low:24,feel:33,cond:'晴・海の日'},
    items:[
-     {id:uid(),cat:'其他',time:'07:30',name:'特急 踊り子51号（東京駅）',note:'全車指定席；海側 A 席靠窗，09:33 抵伊豆高原',lat:35.6812,lng:139.7671},
-     {id:uid(),cat:'景點',time:'10:20',name:'大室山（登山纜車）',hours:'纜車 9:00–17:15',ticket:'纜車往復約 ¥1,000',note:'お鉢めぐり環火口，晴天眺富士山',lat:35.9036,lng:139.0955},
-     {id:uid(),cat:'景點',time:'13:15',name:'城ヶ崎海岸（門脇つり橋）',hours:'全天',ticket:'免費',note:'門脇埼灯台，穿好走的鞋',lat:34.8930,lng:139.1350},
-     {id:uid(),cat:'購物',time:'16:20',name:'熱海銀座商店街',hours:'–18:00',note:'可泡日歸溫泉、先吃晚餐',lat:35.0960,lng:139.0770},
-     {id:uid(),cat:'景點',time:'20:15',name:'熱海海上花火大会（親水公園）',booked:true,note:'固定；雨天照常，22:02 こだま852 回東京',lat:35.0950,lng:139.0790},
+     {id:uid(),cat:'其他',time:'06:45',name:'飯店出發 → 東京駅',mapQ:'東京駅',mins:15,hours:'',note:'半蔵門線往大手町3站約6分→步行至JR東京駅7–10分',lat:35.6852,lng:139.7386},
+     {id:uid(),cat:'其他',time:'07:30',name:'特急 踊り子51号（東京駅）',mapQ:'東京駅',mins:5,wmode:'walk',hours:'東京 07:30 發',note:'全車指定席；海側 A 席靠窗；09:33 抵伊豆高原駅',lat:35.6812,lng:139.7671},
+     {id:uid(),cat:'景點',time:'10:20–12:35',name:'大室山（登山纜車）',mapQ:'大室山',hours:'纜車 9:00–17:15',ticket:'纜車往復約 ¥1,000',note:'踊り子→伊豆高原(09:33)→巴士① 10:00→シャボテン公園；お鉢めぐり環火口，晴天眺富士山',lat:35.9036,lng:139.0955},
+     {id:uid(),cat:'美食',time:'午餐',name:'Ohmuro Luncheonette',mapQ:'Ohmuro Luncheonette 大室山',mins:2,wmode:'walk',hours:'',note:'大室山周邊',lat:35.9036,lng:139.0955},
+     {id:uid(),cat:'景點',time:'13:15–14:30',name:'城ヶ崎海岸（門脇つり橋）',mapQ:'門脇つり橋 城ヶ崎',mins:29,hours:'全天',ticket:'免費',note:'巴士② 12:45→伊豆海洋公園；門脇埼灯台、ピクニカルコース，穿好走的鞋',lat:34.8930,lng:139.1350},
+     {id:uid(),cat:'其他',time:'15:24–16:13',name:'伊豆高原 → 熱海（キンメ電車 觀光列車）',mapQ:'伊豆高原駅',mins:10,hours:'',note:'巴士③ 14:35 回伊豆高原駅；リゾート21，普通車票可搭，海景在右側',lat:34.9053,lng:139.1000},
+     {id:uid(),cat:'購物',time:'16:20–20:00',name:'熱海銀座商店街',mapQ:'熱海銀座商店街',hours:'–18:00',note:'伊豆高原→熱海 約49分（キンメ電車）；可泡日歸溫泉、逛熱海銀座、先吃晚餐',lat:35.0960,lng:139.0770},
+     {id:uid(),cat:'景點',time:'20:15–20:40',name:'熱海海上花火大会（親水公園）',mapQ:'熱海親水公園',mins:8,wmode:'walk',booked:true,note:'固定；雨天照常',lat:35.0950,lng:139.0790},
+     {id:uid(),cat:'其他',time:'22:02',name:'こだま852号 熱海 → 東京',mapQ:'熱海駅',mins:20,wmode:'walk',hours:'熱海 22:02 發 → 東京 22:48 著',note:'花火後熱海駅步行約20分、極擁擠，事先買好指定席',lat:35.1057,lng:139.0781},
+     {id:uid(),cat:'住宿',time:'約23:10',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',note:'こだま 東京駅 22:48 → 半藏門約23:10。🎫 這趟（約22:50）首刷啟用「24小時地鐵券 ¥1,000」→ 涵蓋 Day5回程＋Day6全日',lat:35.6852,lng:139.7386},
    ]},
- { date:'7/21', en:'Tue', full:'2026-07-21', region:'麻布台・廣尾',
+ { date:'7/21', en:'Tue', full:'2026-07-21', region:'麻布台・廣尾・回程',
    weather:{emoji:'☀️',temp:33,low:27,feel:36,cond:'晴'},
    items:[
-     {id:uid(),cat:'購物',time:'上午',name:'麻布台ヒルズ',hours:'11:00–20:00',note:'半藏門→神谷町約15分',lat:35.6614,lng:139.7400},
-     {id:uid(),cat:'美食',time:'13:00',name:'廣尾「12天」壽喜燒吃到飽',booked:true,note:'已訂位固定時段',lat:35.6520,lng:139.7220},
-     {id:uid(),cat:'購物',time:'下午',name:'惠比壽',hours:'–20:00',note:'日比谷線約3分',lat:35.6467,lng:139.7100},
-     {id:uid(),cat:'航班',time:'約17:00 出發回程',name:'回程 · 成田機場',lat:35.7719,lng:140.3929,
+     {id:uid(),cat:'住宿',time:'上午',name:'退房・寄行李（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',hours:'退房後行李寄放飯店',note:'早上退房把行李寄飯店（半藏門），下午回來取',lat:35.6852,lng:139.7386},
+     {id:uid(),cat:'購物',time:'上午',name:'麻布台ヒルズ',mapQ:'麻布台ヒルズ',mins:15,note:'半藏門→神谷町約15分（2號出口）',hours:'11:00–20:00',lat:35.6614,lng:139.7400},
+     {id:uid(),cat:'美食',time:'13:00',name:'午餐 廣尾「12天」壽喜燒吃到飽',mapQ:'すき焼き 12天 広尾',mins:5,booked:true,note:'已訂位固定時段；神谷町→廣尾約5分',lat:35.6520,lng:139.7220},
+     {id:uid(),cat:'購物',time:'下午',name:'惠比壽 逛街',mapQ:'恵比寿駅',mins:3,hours:'–20:00',note:'廣尾→惠比壽 日比谷線約3分',lat:35.6467,lng:139.7100},
+     {id:uid(),cat:'其他',time:'16:30–17:30',name:'回半藏門取行李 → 京成上野',mapQ:'京成上野駅',mins:20,hours:'',note:'惠比壽→半藏門取行李約20分→京成上野約25分；約17:00 離開惠比壽',lat:35.7118,lng:139.7745},
+     {id:uid(),cat:'其他',time:'18:20–約19:15',name:'Skyliner 京成上野 → 成田空港',mapQ:'成田空港',mins:44,hours:'京成上野 18:20 發',note:'約44分抵成田（約19:15）；用 Day1 已換好的回程指定席。酷航21:15，提前約2hr到、先線上報到',lat:35.7719,lng:140.3929},
+     {id:uid(),cat:'航班',time:'21:15 酷航起飛',name:'回程 · 成田機場',lat:35.7719,lng:140.3929,
        flight:{tag:'回程 INBOUND',from:'NRT',dep:'21:15',to:'TPE',arr:'23:55',dur:'約 4h40m',no:'酷航 Scoot ｜ 成田 → 桃園'}},
    ]},
 ];
@@ -603,7 +625,7 @@ const flights = [
 const load = (k,def) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } };
 
 // 種子資料版本：改動 seedDays 時 +1，讓瀏覽器重新載入新行程（會覆蓋本機未匯出的編輯）
-const SEED_VER = 3;
+const SEED_VER = 10;
 const loadDays = () => {
   try{
     if(JSON.parse(localStorage.getItem('izu_days_ver')||'0') === SEED_VER){
@@ -663,7 +685,7 @@ createApp({
     blankForm(){ return {id:null,cat:'景點',name:'',time:'',hours:'',ticket:'',note:'',booked:false}; },
     blankExp(){ return {cat:'飲食',name:'',date:(this.days&&this.days[this.dayIdx]?this.days[this.dayIdx].full:'2026-07-16'),amount:null,pay:'現金',note:''}; },
     mapNav(q){ return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(q); },
-    openNav(it){ window.open(this.mapNav(it.name),'_blank'); },
+    openNav(it){ window.open(this.mapNav(it.mapQ||it.name),'_blank'); },
     catIcon(c){
       const I={
         '景點':'<path d="M12 21s-7-6.4-7-11a7 7 0 0114 0c0 4.6-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
@@ -683,17 +705,27 @@ createApp({
       const s=Math.sin(dLat/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLng/2)**2;
       return 2*R*Math.asin(Math.sqrt(s));
     },
-    transitOf(idx){
+    segOf(idx){
       const list=this.visibleItems;
       const to=list[idx];
       const from = idx===0 ? HOTEL : list[idx-1];
+      if(!to || to.cat==='航班' || (from && from.cat==='航班')) return null; // 航班段不算交通時間
       const d=this.hav(from,to);
+      // 導航：上一站 → 下一站
+      const oq=(from&&(from.mapQ||from.name))||'';
+      const dq=to.mapQ||to.name;
+      const dir=(mode)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(oq)+'&destination='+encodeURIComponent(dq)+'&travelmode='+mode;
+      // 依 PDF 實際交通分鐘（僅在未篩選、前後站正確時採用）
+      if(this.catFilter==='全部' && to.mins!=null){
+        const mode = to.wmode || 'transit'; // PDF 時間多為地鐵；純步行段已用 wmode:'walk' 標記
+        return {min:to.mins, mode, url:dir(mode==='walk'?'walking':'transit')};
+      }
       if(d==null) return null;
+      if(d>12){ return {long:true, url:dir('transit')}; } // 長途：新幹線/特急，不亂估分鐘
       const walkMin=Math.max(1,Math.round(d/4.8*60));
       const mode = walkMin<=15 ? 'walk' : 'transit';
       const min = mode==='walk' ? walkMin : Math.round(d/20*60)+8;
-      const url='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(from.name)+'&destination='+encodeURIComponent(to.name)+'&travelmode='+(mode==='walk'?'walking':'transit');
-      return {min,mode,url};
+      return {min,mode,url:dir(mode==='walk'?'walking':'transit')};
     },
     // ---- reorder ----
     realIndex(visIdx){ // map visible index -> real index in cur.items
