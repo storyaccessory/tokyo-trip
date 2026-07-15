@@ -57,6 +57,19 @@
   .weather .wsub{font-size:11.5px;color:var(--sub);margin-top:3px;}
   .weather .wcond{margin-left:auto;text-align:right;font-size:12px;color:var(--sub);}
   .weather .wcond b{display:block;color:var(--navy);font-size:13px;}
+  /* 上午/下午 雙區天氣 */
+  .weather-split{display:flex;gap:9px;margin:2px 14px 6px;}
+  .wx-half{flex:1;min-width:0;text-decoration:none;color:inherit;border-radius:16px;padding:11px 12px;
+    border:1px solid #d3e9fb;background:linear-gradient(135deg,#eaf6ff,#dcefff);}
+  .wx-half.pm{background:linear-gradient(135deg,#fdf0e9,#ffe6ea);border-color:#f6d3c8;}
+  .wx-half .wx-when{font-size:10.5px;font-weight:800;color:#3f8fd0;letter-spacing:.2px;}
+  .wx-half.pm .wx-when{color:#e08157;}
+  .wx-half .wx-main{display:flex;align-items:center;gap:7px;margin:3px 0 2px;}
+  .wx-half .wx-main .wemoji{font-size:25px;line-height:1;}
+  .wx-half .wx-main .wtemp{font-size:22px;font-weight:800;color:#2b6cb0;}
+  .wx-half.pm .wx-main .wtemp{color:#d5622f;}
+  .wx-half .wx-area{font-size:12px;color:#324a63;font-weight:700;}
+  .wx-half .wx-cond{font-size:10.5px;color:#7c8aa0;margin-top:1px;}
 
   /* category filter */
   .catbar{display:flex;align-items:center;gap:8px;padding:4px 14px 8px;}
@@ -160,6 +173,16 @@
   .exp-item .eamt .a{font-weight:800;color:var(--navy);}
   .exp-item .eamt .p{font-size:10.5px;color:var(--sub);}
   .exp-item .edel{background:none;border:none;color:#c4cede;font-size:16px;cursor:pointer;}
+
+  /* 分帳 */
+  .mrow{display:flex;flex-wrap:wrap;gap:8px;}
+  .mchip{display:inline-flex;align-items:center;gap:5px;background:#eef3fb;color:#2b527e;border:1px solid #d5e3f5;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;}
+  .mchip.add{background:#fff;border-style:dashed;color:#7c8aa0;}
+  .mchip:active{filter:brightness(.96);}
+  .parts{display:flex;flex-wrap:wrap;gap:8px;}
+  .pchip{border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:600;color:#7c8aa0;cursor:pointer;user-select:none;}
+  .pchip.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .settle-tx{font-size:13.5px;color:#1e355e;padding:5px 0;display:flex;align-items:center;gap:6px;}
   .empty{text-align:center;color:var(--sub);font-size:13px;padding:40px 10px;}
   .empty .big{font-size:38px;margin-bottom:8px;}
 
@@ -211,15 +234,21 @@
       </div>
     </div>
 
-    <!-- weather -->
-    <a class="weather" :href="'https://www.google.com/search?q='+encodeURIComponent(cur.region+' 天氣')" target="_blank" rel="noopener">
-      <span class="wemoji">{{ cur.weather.emoji }}</span>
-      <div>
-        <div class="wtemp">{{ cur.weather.temp }}°<span style="font-size:14px;color:#7c8aa0;font-weight:600"> / {{ cur.weather.low }}°</span></div>
-        <div class="wsub">體感 {{ cur.weather.feel }}°　點擊查看 Google 即時天氣</div>
-      </div>
-      <div class="wcond"><b>{{ cur.region }}</b>{{ cur.weather.cond }}</div>
-    </a>
+    <!-- weather：上午/下午 兩區，各自可點開 Google 天氣 -->
+    <div class="weather-split">
+      <a class="wx-half am" :href="gWeather(cur.wx.am.area)" target="_blank" rel="noopener">
+        <div class="wx-when">上午 ～{{ cur.wx.split }}</div>
+        <div class="wx-main"><span class="wemoji">{{ cur.wx.am.emoji }}</span><span class="wtemp">{{ cur.wx.am.temp }}°</span></div>
+        <div class="wx-area">📍{{ cur.wx.am.area }}</div>
+        <div class="wx-cond">體感 {{ cur.wx.am.feel }}° · 低 {{ cur.wx.am.low }}° · {{ cur.wx.am.cond }}</div>
+      </a>
+      <a class="wx-half pm" :href="gWeather(cur.wx.pm.area)" target="_blank" rel="noopener">
+        <div class="wx-when">{{ cur.wx.split }} 後</div>
+        <div class="wx-main"><span class="wemoji">{{ cur.wx.pm.emoji }}</span><span class="wtemp">{{ cur.wx.pm.temp }}°</span></div>
+        <div class="wx-area">📍{{ cur.wx.pm.area }}</div>
+        <div class="wx-cond">體感 {{ cur.wx.pm.feel }}° · 低 {{ cur.wx.pm.low }}° · {{ cur.wx.pm.cond }}</div>
+      </a>
+    </div>
 
     <!-- category filter -->
     <div class="catbar">
@@ -392,12 +421,44 @@
       <div class="t2">¥ {{ totalExp.toLocaleString() }}</div>
       <div style="font-size:12px;opacity:.85;margin-top:4px" v-if="rate">≈ NT$ {{ Math.round(totalExp*rate).toLocaleString() }}</div>
     </div>
+
+    <!-- 同行成員 -->
+    <div class="sec-title" style="margin-top:6px">👥 同行成員</div>
+    <div class="panel">
+      <div class="mrow">
+        <span class="mchip" v-for="m in members" :key="m.id" @click="removeMember(m)">{{ m.name }} ✕</span>
+        <button class="mchip add" @click="addMember">＋ 加人</button>
+      </div>
+      <div v-if="!members.length" style="font-size:12px;color:#7c8aa0;margin-top:8px">先加成員，記帳時就能選付款人＋勾選分攤者，自動幫你算誰欠誰。點成員可刪除。</div>
+    </div>
+
+    <!-- 分帳結算 -->
+    <template v-if="members.length && exp.length">
+      <div class="sec-title">🧮 分帳結算</div>
+      <div class="panel">
+        <div class="row" v-for="p in settlement.people" :key="p.name">
+          <span class="lab">{{ p.name }}</span>
+          <span class="val" :style="{color: p.net>=0 ? '#2f8a5b' : '#e0384c'}">
+            {{ p.net>=0 ? '應收 ¥'+p.net.toLocaleString() : '應付 ¥'+(-p.net).toLocaleString() }}
+          </span>
+        </div>
+        <div style="border-top:1px dashed #e3e8ef;margin-top:9px;padding-top:8px">
+          <div v-if="settlement.tx.length">
+            <div class="settle-tx" v-for="(t,i) in settlement.tx" :key="i">
+              💸 <b>{{ t.from }}</b> → <b>{{ t.to }}</b>　¥{{ t.amt.toLocaleString() }}
+              <span v-if="rate" style="color:#7c8aa0;font-weight:400">（≈NT${{ Math.round(t.amt*rate).toLocaleString() }}）</span>
+            </div>
+          </div>
+          <div v-else style="font-size:12.5px;color:#7c8aa0">目前已結清，無需轉帳 🎉</div>
+        </div>
+      </div>
+    </template>
     <div v-if="exp.length">
       <div class="exp-item" v-for="(e,i) in exp" :key="e.id">
         <span class="etag" :style="{background:expColor(e.cat)}">{{ e.cat }}</span>
         <div style="min-width:0">
           <div class="enm">{{ e.name }}</div>
-          <div class="esub">{{ e.date }} · {{ e.note||'—' }}</div>
+          <div class="esub">{{ e.date }}<span v-if="e.payer"> · {{ e.payer }} 付</span><span v-if="e.parts && e.parts.length"> · {{ e.parts.length }}人分</span><span v-if="e.note"> · {{ e.note }}</span></div>
         </div>
         <div class="eamt"><div class="a">¥{{ Number(e.amount).toLocaleString() }}</div><div class="p">{{ e.pay }}</div></div>
         <button class="edel" @click="exp.splice(i,1)">×</button>
@@ -475,6 +536,18 @@
       </select>
       <label class="fl">金額（日圓 ¥）</label>
       <input class="inp" type="number" v-model.number="expForm.amount" placeholder="0">
+      <template v-if="members.length">
+        <label class="fl">付款人（誰先付的）</label>
+        <select class="inp" v-model="expForm.payer">
+          <option v-for="m in members" :key="m.id" :value="m.name">{{ m.name }}</option>
+        </select>
+        <label class="fl">分攤者（勾選要一起分這筆的人）</label>
+        <div class="parts">
+          <label v-for="m in members" :key="m.id" class="pchip" :class="{on: expForm.parts.includes(m.name)}">
+            <input type="checkbox" :value="m.name" v-model="expForm.parts" style="position:absolute;opacity:0;width:0;height:0"> {{ m.name }}
+          </label>
+        </div>
+      </template>
       <label class="fl">付款方式</label>
       <div style="display:flex;gap:9px">
         <button class="btn" :class="expForm.pay==='現金'?'btn-primary':'btn-ghost'" @click="expForm.pay='現金'">現金</button>
@@ -502,9 +575,9 @@ const uid = () => Math.random().toString(36).slice(2,9);
 
 const seedDays = [
  { date:'7/16', en:'Thu', full:'2026-07-16', region:'上野・谷根千',
-   weather:{emoji:'☀️',temp:32,low:26,feel:35,cond:'晴・盛夏'},
+   wx:{split:'12:30', am:{area:'東京', emoji:'☀️',temp:31,low:26,feel:34,cond:'晴・盛夏'}, pm:{area:'上野', emoji:'☀️',temp:33,low:27,feel:36,cond:'晴'}},
    items:[
-     {id:uid(),cat:'航班',time:'06:00 桃園機場報到',name:'桃園機場報到',lat:25.0797,lng:121.2342,
+     {id:uid(),cat:'航班',time:'04:45 桃園機場報到',name:'桃園機場報到',lat:25.0797,lng:121.2342,
        flight:{tag:'去程 OUTBOUND',from:'TPE',dep:'06:45',to:'NRT',arr:'11:15',dur:'約 4h30m',no:'酷航 Scoot ｜ 桃園 → 成田'}},
      {id:uid(),cat:'其他',time:'12:19–13:43',name:'出關 → Skyliner 進市區',mapQ:'京成上野駅',hours:'成田空港 → 京成上野 約44分',note:'落地11:15＋入境提行李約1hr。往京成上野 Skyliner 班次（擇一）：🚄 12:19→約13:03 ／ 12:38→約13:22 ／ 12:59→約13:43。※ 12:29 那班是 ACCESS特急往羽田、勿搭。建議先線上預訂指定席；並在京成上野先劃/換 7/21 回程 Skyliner 指定席',lat:35.7118,lng:139.7745},
      {id:uid(),cat:'美食',time:'13:15–14:00',name:'午餐 とんかつ 山家（上野）',mapQ:'とんかつ 山家 上野',mins:2,wmode:'walk',hours:'11:00–22:30',note:'京成上野到即吃，炸豬排名店',lat:35.7089,lng:139.7746},
@@ -516,8 +589,8 @@ const seedDays = [
      {id:uid(),cat:'美食',time:'22:00',name:'焼肉 鶯谷園',mapQ:'焼肉 鶯谷園',mins:6,booked:true,note:'已訂位固定時段；吃完約23:00',lat:35.7205,lng:139.7799},
      {id:uid(),cat:'住宿',time:'約23:00',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:25,note:'鶯谷 → 半藏門約25分',lat:35.6852,lng:139.7386},
    ]},
- { date:'7/17', en:'Fri', full:'2026-07-17', region:'銀座・東京駅',
-   weather:{emoji:'☀️',temp:33,low:26,feel:36,cond:'晴'},
+ { date:'7/17', en:'Fri', full:'2026-07-17', region:'神保町・銀座',
+   wx:{split:'12:30', am:{area:'神保町', emoji:'☀️',temp:32,low:26,feel:35,cond:'晴'}, pm:{area:'銀座', emoji:'☀️',temp:34,low:27,feel:37,cond:'晴'}},
    items:[
      {id:uid(),cat:'景點',time:'09:00',name:'五十稲荷神社（神保町）',mapQ:'五十稲荷神社 神保町',mins:6,hours:'9:00–17:00',ticket:'免費',note:'半藏門線→神保町 約6分（A7/A9 出口）',lat:35.6957,lng:139.7576},
      {id:uid(),cat:'景點',time:'10:00',name:'人形町 野口勇專門店（OZEKI Tokyo Gallery）',mapQ:'OZEKI Tokyo Gallery, 1 Chome-2-6 Nihonbashiningyocho, Chuo City, Tokyo',mins:8,hours:'',note:'神保町→水天宮前 約8分（前面買到可略過）',lat:35.6858,lng:139.7827},
@@ -528,7 +601,7 @@ const seedDays = [
      {id:uid(),cat:'住宿',time:'約22:30',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:15,note:'有楽町 → 半藏門約15分',lat:35.6852,lng:139.7386},
    ]},
  { date:'7/18', en:'Sat', full:'2026-07-18', region:'大井・表參道・新宿',
-   weather:{emoji:'⛅',temp:31,low:25,feel:34,cond:'多雲'},
+   wx:{split:'12:30', am:{area:'大井競馬場', emoji:'⛅',temp:30,low:25,feel:33,cond:'多雲'}, pm:{area:'表參道', emoji:'⛅',temp:32,low:26,feel:35,cond:'多雲時晴'}},
    items:[
      {id:uid(),cat:'景點',time:'09:00–10:30',name:'大井競馬場 跳蚤市場',mapQ:'大井競馬場',mins:40,hours:'週末早上開市',ticket:'免費',note:'08:20 半藏門出門，約40分；雨天可能縮短，逛約1.5小時',lat:35.5931,lng:139.7466},
      {id:uid(),cat:'美食',time:'11:30–12:30',name:'午餐 川上庵 KAWAKAMI-AN（外苑前）',mapQ:'川上庵 外苑前',mins:45,hours:'11:00–22:00',note:'大井→青山一丁目→外苑前 約40–50分；蕎麥麵',lat:35.6706,lng:139.7175},
@@ -537,8 +610,8 @@ const seedDays = [
      {id:uid(),cat:'購物',time:'19:00–21:00',name:'新宿（唐吉訶德/體育用品）',mapQ:'新宿駅',mins:10,hours:'–24:00',note:'表參道→新宿 副都心線約10分',lat:35.6896,lng:139.7006},
      {id:uid(),cat:'住宿',time:'約21:00',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:15,note:'新宿→半藏門約15分（都営新宿線→九段下轉半蔵門線）',lat:35.6852,lng:139.7386},
    ]},
- { date:'7/19', en:'Sun', full:'2026-07-19', region:'代官山・渋谷',
-   weather:{emoji:'☀️',temp:32,low:26,feel:35,cond:'晴'},
+ { date:'7/19', en:'Sun', full:'2026-07-19', region:'自由が丘・渋谷',
+   wx:{split:'12:30', am:{area:'自由が丘', emoji:'☀️',temp:31,low:26,feel:34,cond:'晴'}, pm:{area:'渋谷', emoji:'☀️',temp:33,low:27,feel:36,cond:'晴'}},
    items:[
      {id:uid(),cat:'美食',time:'09:30–10:45',name:'NO4 早午餐（四番町）',mapQ:'NO4 四番町',mins:10,wmode:'walk',hours:'9:00–17:00',note:'飯店步行約10分',lat:35.6903,lng:139.7402},
      {id:uid(),cat:'購物',time:'11:00–13:00',name:'自由が丘（IDÉE / Todays Special）',mapQ:'自由が丘駅',mins:33,hours:'11:00–20:00',note:'先衝最遠 約30–35分；KOHORO、Trainchi、甜點天國',lat:35.6076,lng:139.6689},
@@ -550,7 +623,7 @@ const seedDays = [
      {id:uid(),cat:'住宿',time:'約22:00',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',mins:20,note:'東京鐵塔 → 半藏門約20分',lat:35.6852,lng:139.7386},
    ]},
  { date:'7/20', en:'Mon', full:'2026-07-20', region:'伊豆・熱海',
-   weather:{emoji:'☀️',temp:30,low:24,feel:33,cond:'晴・海の日'},
+   wx:{split:'16:00', am:{area:'伊豆高原', emoji:'☀️',temp:29,low:24,feel:32,cond:'晴・海の日'}, pm:{area:'熱海', emoji:'🎆',temp:30,low:25,feel:33,cond:'晴（夜有花火）'}},
    items:[
      {id:uid(),cat:'其他',time:'06:45',name:'飯店出發 → 東京駅',mapQ:'東京駅',mins:15,hours:'',note:'半蔵門線往大手町3站約6分→步行至JR東京駅7–10分',lat:35.6852,lng:139.7386},
      {id:uid(),cat:'其他',time:'07:30',name:'特急 踊り子51号（東京駅）',mapQ:'東京駅',mins:5,wmode:'walk',hours:'東京 07:30 發',note:'全車指定席；海側 A 席靠窗；09:33 抵伊豆高原駅',lat:35.6812,lng:139.7671},
@@ -563,8 +636,8 @@ const seedDays = [
      {id:uid(),cat:'其他',time:'22:02',name:'こだま852号 熱海 → 東京',mapQ:'熱海駅',mins:20,wmode:'walk',hours:'熱海 22:02 發 → 東京 22:48 著',note:'花火後熱海駅步行約20分、極擁擠，事先買好指定席',lat:35.1057,lng:139.0781},
      {id:uid(),cat:'住宿',time:'約23:10',name:'回飯店（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',note:'こだま 東京駅 22:48 → 半藏門約23:10。🎫 這趟（約22:50）首刷啟用「24小時地鐵券 ¥1,000」→ 涵蓋 Day5回程＋Day6全日',lat:35.6852,lng:139.7386},
    ]},
- { date:'7/21', en:'Tue', full:'2026-07-21', region:'麻布台・廣尾・回程',
-   weather:{emoji:'☀️',temp:33,low:27,feel:36,cond:'晴'},
+ { date:'7/21', en:'Tue', full:'2026-07-21', region:'麻布台・惠比壽',
+   wx:{split:'12:30', am:{area:'麻布台', emoji:'☀️',temp:33,low:27,feel:36,cond:'晴'}, pm:{area:'惠比壽', emoji:'☀️',temp:34,low:28,feel:37,cond:'晴'}},
    items:[
      {id:uid(),cat:'住宿',time:'上午',name:'退房・寄行李（ホテルモントレ半蔵門）',mapQ:'ホテルモントレ半蔵門',hours:'退房後行李寄放飯店',note:'早上退房把行李寄飯店（半藏門），下午回來取',lat:35.6852,lng:139.7386},
      {id:uid(),cat:'購物',time:'上午',name:'麻布台ヒルズ',mapQ:'麻布台ヒルズ',mins:15,note:'半藏門→神谷町約15分（2號出口）',hours:'11:00–20:00',lat:35.6614,lng:139.7400},
@@ -625,7 +698,7 @@ const flights = [
 const load = (k,def) => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } };
 
 // 種子資料版本：改動 seedDays 時 +1，讓瀏覽器重新載入新行程（會覆蓋本機未匯出的編輯）
-const SEED_VER = 10;
+const SEED_VER = 13;
 const loadDays = () => {
   try{
     if(JSON.parse(localStorage.getItem('izu_days_ver')||'0') === SEED_VER){
@@ -652,9 +725,10 @@ createApp({
       // exchange
       rate: load('izu_rate', 0.21),
       jpyIn: 1000,
-      // shopping / expense
+      // shopping / expense / 分帳
       shop: load('izu_shop', []),
       exp: load('izu_exp', []),
+      members: load('izu_members', []),
       // modals
       showItem:false, editing:false, form:this.blankForm(),
       showShop:false, shopForm:{name:'',img:''},
@@ -672,19 +746,54 @@ createApp({
     curSweets(){ return SWEETS[this.cur.date] || []; },
     twdOut(){ const v=(this.jpyIn||0)*(this.rate||0); return (Math.round(v*100)/100).toLocaleString(); },
     totalExp(){ return this.exp.reduce((s,e)=>s+(Number(e.amount)||0),0); },
+    settlement(){
+      const bal={};
+      const ens=n=>{ if(!(n in bal)) bal[n]=0; };
+      for(const e of this.exp){
+        const amt=Number(e.amount)||0;
+        if(e.payer){ ens(e.payer); bal[e.payer]+=amt; }
+        const parts=(e.parts&&e.parts.length)?e.parts:[];
+        if(parts.length){ const sh=amt/parts.length; for(const p of parts){ ens(p); bal[p]-=sh; } }
+      }
+      const people=this.members.map(m=>({name:m.name, net:Math.round(bal[m.name]||0)}));
+      // 貪婪配對：欠款者 → 收款者
+      const D=people.filter(p=>p.net<0).map(p=>({name:p.name,amt:-p.net})).sort((a,b)=>b.amt-a.amt);
+      const C=people.filter(p=>p.net>0).map(p=>({name:p.name,amt:p.net})).sort((a,b)=>b.amt-a.amt);
+      const tx=[]; let i=0,j=0;
+      while(i<D.length&&j<C.length){
+        const pay=Math.min(D[i].amt,C[j].amt);
+        if(pay>0.5) tx.push({from:D[i].name,to:C[j].name,amt:Math.round(pay)});
+        D[i].amt-=pay; C[j].amt-=pay;
+        if(D[i].amt<=0.5)i++; if(C[j].amt<=0.5)j++;
+      }
+      return {people, tx};
+    },
   },
   watch:{
     days:{deep:true,handler(v){ localStorage.setItem('izu_days',JSON.stringify(v)); }},
     shop:{deep:true,handler(v){ localStorage.setItem('izu_shop',JSON.stringify(v)); }},
     exp:{deep:true,handler(v){ localStorage.setItem('izu_exp',JSON.stringify(v)); }},
+    members:{deep:true,handler(v){ localStorage.setItem('izu_members',JSON.stringify(v)); }},
     rate(v){ localStorage.setItem('izu_rate',JSON.stringify(v)); },
     carInfo:{deep:true,handler(v){ localStorage.setItem('izu_car',JSON.stringify(v)); }},
     dayIdx(){ this.catFilter='全部'; },
   },
   methods:{
     blankForm(){ return {id:null,cat:'景點',name:'',time:'',hours:'',ticket:'',note:'',booked:false}; },
-    blankExp(){ return {cat:'飲食',name:'',date:(this.days&&this.days[this.dayIdx]?this.days[this.dayIdx].full:'2026-07-16'),amount:null,pay:'現金',note:''}; },
+    blankExp(){ return {cat:'飲食',name:'',date:(this.days&&this.days[this.dayIdx]?this.days[this.dayIdx].full:'2026-07-16'),amount:null,pay:'現金',note:'',payer:(this.members&&this.members[0]?this.members[0].name:''),parts:(this.members?this.members.map(m=>m.name):[])}; },
+    addMember(){
+      const n=(window.prompt('輸入成員名字')||'').trim();
+      if(!n) return;
+      if(this.members.some(m=>m.name===n)){ alert('已有同名成員'); return; }
+      this.members.push({id:uid(),name:n});
+    },
+    removeMember(m){
+      if(!confirm('移除成員「'+m.name+'」？（已記錄的花費不會刪除）')) return;
+      const i=this.members.findIndex(x=>x.id===m.id);
+      if(i>-1) this.members.splice(i,1);
+    },
     mapNav(q){ return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(q); },
+    gWeather(area){ return 'https://www.google.com/search?q='+encodeURIComponent(area+' 天氣'); },
     openNav(it){ window.open(this.mapNav(it.mapQ||it.name),'_blank'); },
     catIcon(c){
       const I={
